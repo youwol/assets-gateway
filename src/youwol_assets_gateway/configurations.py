@@ -19,6 +19,7 @@ from youwol_utils.clients.treedb.treedb import TreeDbClient
 from youwol_utils.context import ContextLogger, DeployedContextLogger
 from youwol_utils.middlewares import Middleware
 from youwol_utils.middlewares.authentication_local import AuthLocalMiddleware
+from youwol_utils.utils_paths import get_databases_path
 from .raw_stores.data import DataStore
 from .raw_stores.flux_project import FluxProjectsStore
 from .raw_stores.package import PackagesStore
@@ -178,24 +179,25 @@ async def get_local_config_test() -> Configuration:
 
 
 async def get_full_local_config() -> Configuration:
-    platform_path = find_platform_path()
-    storage = get_local_storage_client(platform_path=platform_path)
-    docdb = get_local_docdb_client(platform_path=platform_path)
+    py_youwol_port = sys.argv[2]
+    database_path = await get_databases_path(py_youwol_port)
+    storage = get_local_storage_client(database_path=database_path)
+    docdb = get_local_docdb_client(database_path=database_path)
     data_client = DataClient(storage=storage, docdb=docdb)
-    flux_client = FluxClient(url_base="http://localhost:2000/api/flux-backend")
-    cdn_client = CdnClient(url_base="http://localhost:2000/api/cdn-backend")
-    stories_client = StoriesClient(url_base="http://localhost:2000/api/stories-backend")
+    flux_client = FluxClient(url_base=f"http://localhost:{py_youwol_port}/api/flux-backend")
+    cdn_client = CdnClient(url_base=f"http://localhost:{py_youwol_port}/api/cdn-backend")
+    stories_client = StoriesClient(url_base=f"http://localhost:{py_youwol_port}/api/stories-backend")
 
-    treedb_client = TreeDbClient(url_base="http://localhost:2000/api/treedb-backend")
-    assets_client = AssetsClient(url_base="http://localhost:2000/api/assets-backend")
+    treedb_client = TreeDbClient(url_base=f"http://localhost:{py_youwol_port}/api/treedb-backend")
+    assets_client = AssetsClient(url_base=f"http://localhost:{py_youwol_port}/api/assets-backend")
 
     def docdb_factory(keyspace: str, table: str, primary: str):
-        return LocalDocDbClient(root_path=platform_path.parent / 'drive-shared' / 'docdb', keyspace_name=keyspace,
+        return LocalDocDbClient(root_path=database_path / 'docdb', keyspace_name=keyspace,
                                 table_body=TableBody(name=table, version="0.0", columns=[], partition_key=[primary])
                                 )
 
     def storage_factory(bucket_name: str):
-        return LocalStorageClient(root_path=platform_path.parent / 'drive-shared' / 'storage',
+        return LocalStorageClient(root_path=database_path / 'storage',
                                   bucket_name=bucket_name)
 
     return Configuration(
