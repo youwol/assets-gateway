@@ -9,7 +9,7 @@ from youwol_utils import (
 )
 from youwol_utils.context import Context
 from .configurations import get_configuration
-from .routers import tree, assets, raw, cdn, misc
+from .routers import tree, assets, raw, cdn, misc, cdn_backend
 
 router = APIRouter()
 
@@ -46,6 +46,13 @@ router.include_router(
     prefix="/misc",
     dependencies=[Depends(get_configuration)],
     tags=["misc"]
+)
+
+router.include_router(
+    cdn_backend.router,
+    prefix="/cdn-backend",
+    dependencies=[Depends(get_configuration)],
+    tags=["cdn"]
 )
 
 
