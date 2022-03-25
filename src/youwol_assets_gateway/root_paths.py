@@ -69,7 +69,7 @@ async def get_user_info(request: Request):
             request=request,
             response=lambda: response,
             action='get user info'
-    ) as _ctx:
+    ):
         user = user_info(request)
         groups = get_all_individual_groups(user["memberof"])
         groups = [Group(id=private_group_id(user), path="private")] + \
@@ -88,7 +88,7 @@ async def get_groups(request: Request):
             request=request,
             response=lambda: response,
             action='get user groups'
-    ) as _ctx:
+    ):
         user = user_info(request)
         groups = get_all_individual_groups(user["memberof"])
         groups = [Group(id=private_group_id(user), path="private")] + [Group(id=str(to_group_id(g)), path=g)
