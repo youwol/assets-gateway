@@ -3,5 +3,6 @@ src/tmp_zips
 .idea
 .coverage
 src/youwol_utils
+src/youwol_assets_gateway
 **/__pycache__/**/*
 

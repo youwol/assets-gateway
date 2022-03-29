@@ -3,6 +3,7 @@ import sys
 from dataclasses import dataclass
 from typing import Callable, Union, Type, Dict, Coroutine, Any
 
+from youwol_assets_gateway import Constants
 from youwol_utils import (
     AuthClient, CacheClient, LocalCacheClient, find_platform_path, CdnClient, DocDb, Storage,
     DocDbClient, StorageClient, LocalDocDbClient, LocalStorageClient, get_headers_auth_admin_from_env, TableBody,
@@ -20,17 +21,14 @@ from youwol_utils.context import ContextLogger, DeployedContextLogger
 from youwol_utils.middlewares import Middleware
 from youwol_utils.middlewares.authentication_local import AuthLocalMiddleware
 from youwol_utils.utils_paths import get_databases_path
-from .raw_stores.data import DataStore
-from .raw_stores.flux_project import FluxProjectsStore
-from .raw_stores.package import PackagesStore
-from .raw_stores.story import StoriesStore
+from youwol_assets_gateway.raw_stores import DataStore, FluxProjectsStore, PackagesStore, StoriesStore
 
 AuthMiddleware = Union[Type[Middleware], Type[AuthLocalMiddleware]]
 
 
 @dataclass(frozen=True)
 class Configuration:
-    open_api_prefix: str
+    root_path: str
     http_port: int
     base_path: str
 
@@ -48,12 +46,7 @@ class Configuration:
     docdb_factory: Callable[[str, str, str], DocDb]
     storage_factory: Callable[[str], Storage]
 
-    cache_prefix: str = "assets-gateway"
     replication_factor: int = 2
-    unprotected_paths: Callable[[str], bool] = lambda url: \
-        url.path.split("/")[-1] == "healthz" or url.path.split("/")[-1] == "openapi-docs"
-
-    to_package = ["flux-project", "data", "package", "group-showcase"]
 
     def assets_stores(self):
         return [
@@ -101,15 +94,15 @@ async def get_tricot_config() -> Configuration:
         return StorageClient(url_base="http://storage/api", bucket_name=bucket_name)
 
     return Configuration(
-        open_api_prefix='/api/assets-gateway',
+        root_path='/api/assets-gateway',
         http_port=8080,
         base_path="",
         auth_middleware=Middleware,
         auth_middleware_args={
             "auth_client": AuthClient(url_base=f"https://{openid_host}/auth"),
             "cache_client": CacheClient(host="redis-master.infra.svc.cluster.local",
-                                        prefix=Configuration.cache_prefix),
-            "unprotected_paths": Configuration.unprotected_paths
+                                        prefix=Constants.cache_prefix),
+            "unprotected_paths": Constants.unprotected_paths
         },
         data_client=data_client,
         flux_client=flux_client,
@@ -145,7 +138,7 @@ async def get_remote_config(url_cluster) -> Configuration:
         return StorageClient(url_base=f"https://{url_cluster}/api/storage", bucket_name=bucket_name)
 
     return Configuration(
-        open_api_prefix='/api/assets-gateway',
+        root_path='/api/assets-gateway',
         http_port=2458,
         base_path="",
         data_client=data_client,
@@ -157,8 +150,8 @@ async def get_remote_config(url_cluster) -> Configuration:
         auth_middleware=Middleware,
         auth_middleware_args={
             "auth_client": AuthClient(url_base=f"https://{openid_host}/auth"),
-            "cache_client": LocalCacheClient(prefix=Configuration.cache_prefix),
-            "unprotected_paths": Configuration.unprotected_paths
+            "cache_client": LocalCacheClient(prefix=Constants.cache_prefix),
+            "unprotected_paths": Constants.unprotected_paths
         },
         docdb_factory=docdb_factory,
         storage_factory=storage_factory,
@@ -201,7 +194,7 @@ async def get_full_local_config() -> Configuration:
                                   bucket_name=bucket_name)
 
     return Configuration(
-        open_api_prefix='',
+        root_path='',
         http_port=2458,
         base_path="",
         data_client=data_client,
