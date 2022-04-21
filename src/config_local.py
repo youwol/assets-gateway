@@ -4,6 +4,7 @@ from youwol_assets_gateway import Configuration
 from youwol_utils import CdnClient
 from youwol_utils.clients.assets.assets import AssetsClient
 from youwol_utils.clients.data_api.data import get_local_storage_client, get_local_docdb_client, DataClient
+from youwol_utils.clients.files import FilesClient
 from youwol_utils.clients.flux.flux import FluxClient
 from youwol_utils.clients.stories.stories import StoriesClient
 from youwol_utils.clients.treedb.treedb import TreeDbClient
@@ -24,6 +25,7 @@ async def get_configuration():
     stories_client = StoriesClient(url_base=f"http://localhost:{env['httpPort']}/api/stories-backend")
     treedb_client = TreeDbClient(url_base=f"http://localhost:{env['httpPort']}/api/treedb-backend")
     assets_client = AssetsClient(url_base=f"http://localhost:{env['httpPort']}/api/assets-backend")
+    files_client = FilesClient(url_base=f"http://localhost:{env['httpPort']}/api/files-backend")
 
     async def _on_before_startup():
         await on_before_startup(service_config)
@@ -34,6 +36,7 @@ async def get_configuration():
         cdn_client=cdn_client,
         stories_client=stories_client,
         treedb_client=treedb_client,
+        files_client=files_client,
         assets_client=assets_client
     )
     server_options = ServerOptions(

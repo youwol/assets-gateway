@@ -7,6 +7,7 @@ from youwol_assets_gateway import Configuration
 from youwol_utils import AuthClient, CacheClient, CdnClient, get_headers_auth_admin_from_env
 from youwol_utils.clients.assets.assets import AssetsClient
 from youwol_utils.clients.data_api.data import get_remote_storage_client, get_remote_docdb_client, DataClient
+from youwol_utils.clients.files import FilesClient
 from youwol_utils.clients.flux.flux import FluxClient
 from youwol_utils.clients.stories.stories import StoriesClient
 from youwol_utils.clients.treedb.treedb import TreeDbClient
@@ -38,6 +39,7 @@ async def get_configuration():
 
     treedb_client = TreeDbClient(url_base="http://treedb-backend")
     assets_client = AssetsClient(url_base="http://assets-backend")
+    files_client = FilesClient(url_base="http://files-backend")
 
     openid_host = os.getenv("AUTH_HOST")
     auth_client = AuthClient(url_base=f"https://{openid_host}/auth")
@@ -53,6 +55,7 @@ async def get_configuration():
         stories_client=stories_client,
         treedb_client=treedb_client,
         assets_client=assets_client,
+        files_client=files_client,
         admin_headers=await get_headers_auth_admin_from_env()
     )
 
