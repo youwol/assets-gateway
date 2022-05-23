@@ -11,7 +11,7 @@ from youwol_utils.clients.files import FilesClient
 from youwol_utils.clients.flux.flux import FluxClient
 from youwol_utils.clients.stories.stories import StoriesClient
 from youwol_utils.clients.treedb.treedb import TreeDbClient
-from youwol_utils.context import DeployedContextLogger
+from youwol_utils.context import DeployedContextReporter
 from youwol_utils.middlewares import Middleware
 from youwol_utils.servers.fast_api import FastApiMiddleware, AppConfiguration, ServerOptions
 
@@ -74,7 +74,7 @@ async def get_configuration():
             )
         ],
         on_before_startup=_on_before_startup,
-        ctx_logger=DeployedContextLogger()
+        ctx_logger=DeployedContextReporter()
     )
     return AppConfiguration(
         server=server_options,
