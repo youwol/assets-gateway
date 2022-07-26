@@ -12,16 +12,12 @@ from youwol_utils.clients.stories.stories import StoriesClient
 from youwol_utils.clients.treedb.treedb import TreeDbClient
 from youwol_utils.context import DeployedContextReporter
 from youwol_utils.middlewares import AuthMiddleware, JwtProviderCookie
+from youwol_utils.servers.env import OPENID_CLIENT, Env, REDIS
 from youwol_utils.servers.fast_api import FastApiMiddleware, AppConfiguration, ServerOptions
 
 
 async def get_configuration():
-    required_env_vars = [
-        "OPENID_BASE_URL",
-        "OPENID_CLIENT_ID",
-        "OPENID_CLIENT_SECRET",
-        "REDIS_HOST"
-    ]
+    required_env_vars = OPENID_CLIENT + REDIS
 
     not_founds = [v for v in required_env_vars if not os.getenv(v)]
     if not_founds:
@@ -45,10 +41,10 @@ async def get_configuration():
     files_client = FilesClient(url_base="http://files-backend")
 
     openid_infos = OidcInfos(
-        base_uri=(os.getenv("OPENID_BASE_URL")),
+        base_uri=(os.getenv(Env.OPENID_BASE_URL)),
         client=PrivateClient(
-            client_id=(os.getenv("OPENID_CLIENT_ID")),
-            client_secret=(os.getenv("OPENID_CLIENT_SECRET"))
+            client_id=(os.getenv(Env.OPENID_CLIENT_ID)),
+            client_secret=(os.getenv(Env.OPENID_CLIENT_SECRET))
         )
     )
 
@@ -79,7 +75,7 @@ async def get_configuration():
                     'jwt_providers': [
                         JwtProviderCookie(
                             jwt_cache=RedisCacheClient(
-                                host=(os.getenv("REDIS_HOST")),
+                                host=(os.getenv(Env.REDIS_HOST)),
                                 prefix='jwt_cache'
                             ),
                             openid_infos=openid_infos
