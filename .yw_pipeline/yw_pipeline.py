@@ -23,21 +23,14 @@ class PipelineFactory(IPipelineFactory):
                 k8sInstance=env.k8sInstance,
                 dockerConfig=CustomPublishDockerStepConfig(
                     dockerRepo=docker_repo,
-                    imageVersion=lambda project, _ctx: get_helm_app_version(project.path),
-                    python_modules_copied=[
-                    ]
+                    imageVersion=lambda project, _ctx: get_helm_app_version(project.path)
                 ),
                 docConfig=DocStepConfig(),
                 helmConfig=InstallHelmStepConfig(
-                    namespace="prod",
-                    secrets=[env.k8sInstance.openIdConnect.authSecret, docker_repo.pullSecret],
+                    namespace="apps",
                     chartPath=lambda project, _ctx: project.path / 'chart',
-                    valuesPath=lambda project, _ctx: project.path / 'chart' / 'values.yaml',
-                    overridingHelmValues=lambda project, _ctx: {
-                        "image": {
-                            "tag": get_helm_app_version(project.path)
-                        },
-                    })
+                    valuesPath=lambda project, _ctx: project.path / 'chart' / 'values.yaml'
+                )
             )
             await ctx.info(text='Pipeline config', data=config)
             result = await pipeline(config, ctx)
