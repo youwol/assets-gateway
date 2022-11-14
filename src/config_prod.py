@@ -1,10 +1,9 @@
 import os
-
 from config_common import on_before_startup
+
 from youwol_assets_gateway import Configuration
 from youwol_utils import CdnClient, RedisCacheClient, get_authorization_header
 from youwol_utils.clients.assets.assets import AssetsClient
-from youwol_utils.clients.data_api.data import get_remote_storage_client, get_remote_docdb_client, DataClient
 from youwol_utils.clients.files import FilesClient
 from youwol_utils.clients.flux.flux import FluxClient
 from youwol_utils.clients.oidc.oidc_config import PrivateClient, OidcInfos
@@ -23,15 +22,6 @@ async def get_configuration():
     if not_founds:
         raise RuntimeError(f"Missing environments variable: {not_founds}")
 
-    storage = get_remote_storage_client(
-        url_base="http://storage/api"
-    )
-    docdb = get_remote_docdb_client(
-        url_base="http://docdb/api",
-        replication_factor=2
-    )
-
-    data_client = DataClient(storage=storage, docdb=docdb)
     flux_client = FluxClient("http://flux-backend")
     cdn_client = CdnClient(url_base="http://cdn-backend")
     stories_client = StoriesClient(url_base="http://stories-backend")
@@ -52,7 +42,6 @@ async def get_configuration():
         await on_before_startup(service_config)
 
     service_config = Configuration(
-        data_client=data_client,
         flux_client=flux_client,
         cdn_client=cdn_client,
         stories_client=stories_client,
