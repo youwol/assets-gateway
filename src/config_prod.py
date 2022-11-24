@@ -48,7 +48,8 @@ async def get_configuration():
         treedb_client=treedb_client,
         assets_client=assets_client,
         files_client=files_client,
-        admin_headers=await get_authorization_header(openid_infos)
+        admin_headers=await get_authorization_header(openid_infos),
+        deployed=True
     )
 
     server_options = ServerOptions(
