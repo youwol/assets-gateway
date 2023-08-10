@@ -6,14 +6,22 @@ from youwol.utils import CdnClient, RedisCacheClient
 from youwol.utils.clients.assets.assets import AssetsClient
 from youwol.utils.clients.files import FilesClient
 from youwol.utils.clients.flux.flux import FluxClient
-from youwol.utils.clients.oidc.oidc_config import OidcInfos, PrivateClient
+from youwol.utils.clients.oidc.oidc_config import PrivateClient, OidcConfig
+from youwol.utils.clients.oidc.tokens_manager import TokensManager, TokensStorageCache
 from youwol.utils.clients.stories.stories import StoriesClient
 from youwol.utils.clients.treedb.treedb import TreeDbClient
 from youwol.utils.context import DeployedContextReporter
-from youwol.utils.middlewares import AuthMiddleware, JwtProviderCookie
+from youwol.utils.middlewares import (
+    AuthMiddleware,
+    JwtProviderCookie,
+    JwtProviderBearer,
+)
 from youwol.utils.servers.env import OPENID_CLIENT, REDIS, Env
-from youwol.utils.servers.fast_api import (AppConfiguration, FastApiMiddleware,
-                                           ServerOptions)
+from youwol.utils.servers.fast_api import (
+    AppConfiguration,
+    FastApiMiddleware,
+    ServerOptions,
+)
 
 
 async def get_configuration():
@@ -31,14 +39,7 @@ async def get_configuration():
     assets_client = AssetsClient(url_base="http://assets-backend")
     files_client = FilesClient(url_base="http://files-backend")
 
-    openid_base_url = (os.getenv(Env.OPENID_BASE_URL))
-    openid_infos = OidcInfos(
-        base_uri=openid_base_url,
-        client=PrivateClient(
-            client_id=(os.getenv(Env.OPENID_CLIENT_ID)),
-            client_secret=(os.getenv(Env.OPENID_CLIENT_SECRET)),
-        ),
-    )
+    openid_base_url = os.getenv(Env.OPENID_BASE_URL)
 
     async def _on_before_startup():
         await on_before_startup(service_config)
@@ -61,15 +62,32 @@ async def get_configuration():
             FastApiMiddleware(
                 AuthMiddleware,
                 {
-                    "openid_base_uri": openid_base_url,
                     "predicate_public_path": lambda url: url.path.endswith("/healthz"),
                     "jwt_providers": [
+                        JwtProviderBearer(
+                            openid_base_url=openid_base_url,
+                        ),
                         JwtProviderCookie(
-                            auth_cache=RedisCacheClient(
-                                host=(os.getenv(Env.REDIS_HOST)), prefix="auth_cache"
+                            tokens_manager=TokensManager(
+                                storage=TokensStorageCache(
+                                    cache=RedisCacheClient(
+                                        host=(os.getenv(Env.REDIS_HOST)),
+                                        prefix="auth_cache",
+                                    ),
+                                ),
+                                oidc_client=OidcConfig(
+                                    base_url=openid_base_url
+                                ).for_client(
+                                    client=PrivateClient(
+                                        client_id=(os.getenv(Env.OPENID_CLIENT_ID)),
+                                        client_secret=(
+                                            os.getenv(Env.OPENID_CLIENT_SECRET)
+                                        ),
+                                    )
+                                ),
                             ),
-                            openid_infos=openid_infos,
-                        )
+                            openid_base_url=openid_base_url,
+                        ),
                     ],
                 },
             )
